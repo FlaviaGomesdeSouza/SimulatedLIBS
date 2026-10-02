@@ -105,44 +105,52 @@ completos estão em [`resultados_exemplo/`](resultados_exemplo/).
 
 | algoritmo | maiores >1 % | menores 0,1–1 % | traço (Cr₂O₃) | \|ΔT\| (K) | tempo (s) | avaliações |
 |---|---:|---:|---:|---:|---:|---:|
-| Mínimos quadrados (TRF/LM) | 1.4 % | 10 % | 151 % | 7 | 3.5 | 651 |
-| MC-LIBS + LS | 1.4 % | 10 % | 151 % | 7 | 13.3 | 42.249 |
-| MCMC bayesiano | 1.5 % | 28 % | 94 % | 8 | 12.5 | 59.752 |
-| Evolução diferencial | 4.9 % | 98 % | 94 % | 69 | 7.1 | 38.656 |
-| ML: PLS | 5.9 % | 17 % | 29 % | 57 | 3.6 | 1.500 |
-| ML: PCA+Ridge | 6.1 % | 8 % | 7 % | 97 | 2.5 | 1.500 |
-| ML: Random Forest | 9.4 % | 8 % | 18 % | 659 | 4.5 | 1.500 |
-| ML: Rede neural (MLP) | 10.4 % | 22 % | 4 % | 213 | 3.8 | 1.500 |
-| Ponto único (Cavalcanti) | 12.7 % | 40 % | 100 % | 562 | 0.0 | 0 |
-| Recozimento simulado | 13.6 % | 96 % | 89 % | 565 | 34.8 | 15.040 |
-| CF-LIBS (Saha-Boltzmann) | 14.6 % | 1004 % | 100 % | 510 | 0.0 | 0 |
-| Desmistura linear (SVD) | 39.9 % | 99 % | 100 % | 9687 | 0.1 | 38 |
-| Desmistura linear (NNLS) | 39.9 % | 99 % | 100 % | 9687 | 0.1 | 38 |
-| CF-LIBS (SBP. sem ressonância) | 50.9 % | 923 % | 100 % | 332 | 0.0 | 0 |
-| MC-LIBS | 100.0 % | 100 % | 100 % | 22 | 24.0 | 82.000 |
+| Mínimos quadrados (5 partidas) | 1,4 % | 10 % | 146 % | 7 | 5,5 | 1.080 |
+| Mínimos quadrados (TRF/LM) | 1,4 % | 10 % | 156 % | 7 | 1,1 | 223 |
+| MC-LIBS + LS | 1,4 % | 10 % | 151 % | 7 | 13,2 | 42.249 |
+| MCMC bayesiano | 1,5 % | 28 % | 94 % | 8 | 12,4 | 59.752 |
+| Evolução diferencial | 4,9 % | 98 % | 94 % | 69 | 7,0 | 38.656 |
+| ML: PCA+Ridge | 5,7 % | 4 % | 13 % | 77 | 2,8 | 1.500 |
+| ML: PLS | 5,9 % | 17 % | 29 % | 57 | 3,6 | 1.500 |
+| ML: Random Forest | 10,6 % | 5 % | 14 % | 677 | 4,2 | 1.500 |
+| Ponto único (Cavalcanti) | 12,7 % | 40 % | 100 % | 562 | 0,0 | 0 |
+| Recozimento simulado | 13,6 % | 96 % | 89 % | 565 | 28,7 | 15.041 |
+| ML: Rede neural (MLP) | 13,8 % | 20 % | 9 % | 247 | 4,2 | 1.500 |
+| CF-LIBS (Saha-Boltzmann) | 14,6 % | 1.004 % | 100 % | 510 | 0,0 | 0 |
+| Desmistura linear (SVD) | 39,9 % | 99 % | 100 % | 9.687 | 0,1 | 38 |
+| Desmistura linear (NNLS) | 39,9 % | 99 % | 100 % | 9.687 | 0,1 | 38 |
+| CF-LIBS (SBP, sem ressonância) | 50,9 % | 923 % | 100 % | 332 | 0,0 | 0 |
+| MC-LIBS | 100,0 % | 100 % | 100 % | 22 | 24,5 | 82.000 |
 
-![erro vs concentração](resultados_exemplo/erro_vs_concentracao.png)
+![mapa de erros](resultados_exemplo/erro_vs_concentracao.png)
+
+![ajustes](resultados_exemplo/ajustes.png)
 
 **Como ler os resultados:**
 
 1. **Métodos de problema direto** (MC + LS, mínimos quadrados e MCMC) chegam a cerca de 1 % de erro
    nos óxidos maiores mesmo com forte autoabsorção, porque o modelo já contém a autoabsorção e a
-   sobreposição de linhas. Isso reproduz a conclusão de Gornushkin & Völker. Os otimizadores
-   puramente estocásticos (MC sozinho, recozimento simulado, evolução diferencial) precisam de muito
-   mais avaliações em 12 dimensões. O artigo usa de 10⁵ a 10⁶ configurações por iteração em GPU.
-   Em CPU, o híbrido estocástico + local é a melhor relação custo/benefício.
+   sobreposição de linhas. Isso reproduz a conclusão de Gornushkin & Völker.
+   **O MC-LIBS puro falhou neste orçamento de CPU.** Com 8×10⁴ avaliações, ele ficou preso numa
+   bacia falsa em 2 das 3 sementes, com Si, Mg e Fe ≈ 0 e custo cerca de 4 vezes o custo nos
+   parâmetros verdadeiros. Aumentar o orçamento para 3,7×10⁵ avaliações não resolveu. O artigo usa
+   de 10⁵ a 10⁶ configurações *por iteração* em GPU. O recozimento simulado e a evolução diferencial
+   também ficam atrás. Em CPU, o melhor custo/benefício é o híbrido estocástico + local (`mc_ls`) ou
+   mínimos quadrados com várias partidas. Neste problema a bacia correta é ampla, então mesmo uma
+   partida única do centro do domínio converge. Não conte com isso em espectros reais.
 2. **O CF-LIBS por Saha–Boltzmann** sofre com a autoabsorção (Ca II, Al I, Na I) e com o fechamento
    em 100 %. O erro nos elementos maiores se propaga para os menores. Perto do limite de detecção,
    uma única flutuação de ruído aceita a 3σ pode multiplicar a concentração de um traço (veja o MnO).
    Excluir as linhas de ressonância também elimina o Na e o K, que só têm linhas de ressonância.
-3. **A calibração de ponto único** corrige boa parte desses vieses usando um único padrão.
+3. **A calibração de ponto único** usa um único padrão (andesito) e reduz pouco o erro dos maiores
+   (de 15 % para 13 %), mas evita os erros explosivos nos menores (de 1.004 % para 40 %).
 4. **A desmistura linear (SVD/NNLS)** é exata para plasma opticamente fino (veja os testes), mas
    falha quando há autoabsorção. Isso a torna um bom controle negativo.
-5. **O ML** acerta bem os elementos maiores, mas os "acertos" em traços não detectáveis vêm da
+5. **O ML** erra de 6 a 14 % nos elementos maiores, mas os "acertos" em traços não detectáveis vêm da
    distribuição de treino (o prior), não do espectro. É um alerta importante antes de usar ML em
    amostras reais.
-6. **O MCMC** fornece intervalos de 16–84 % para cada óxido. Para o Cr₂O₃ (26 ppm), o intervalo
-   é de 0,002 a 0,04 %, o que na prática funciona como um limite superior. Nenhum método de
+6. **O MCMC** fornece intervalos de 16–84 % para cada óxido. Num teste isolado (basalto, ruído
+   gerado com `rng=1`), o intervalo do Cr₂O₃ (26 ppm) foi de 0,002 a 0,04 %, o que na prática funciona como um limite superior. Nenhum método de
    otimização fornece essa informação.
 
 ## SimulatedLIBS e NIST
