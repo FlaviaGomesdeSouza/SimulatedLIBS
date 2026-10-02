@@ -34,7 +34,7 @@ python -m cflibs_bench.benchmark --sample granito --T 8000 --noise 0.01 --algori
 CFLIBS_QUICK=1 python -m cflibs_bench.benchmark --algorithms all   # versão rápida (menos iterações)
 python examples/02_estudo_ruido.py                         # erro vs. nível de ruído
 python examples/03_simulatedlibs_nist.py                   # espectro do SimulatedLIBS/NIST (online)
-python examples/04_carbonatos_veneranda.py --data "analytical data/LIBS"   # dados reais
+python examples/04_carbonatos_veneranda.py   # dados reais (edite os caminhos no topo do arquivo)
 ```
 
 Uso como biblioteca:
@@ -162,13 +162,14 @@ Esses espectros vêm do emulador SimulCam/SuperCam (Echelle, 255–800 nm, ar, 5
 e são comparados com a composição catiônica medida por ICP-OES (Tabela 2 do artigo).
 
 1. Baixe os dados em <https://doi.org/10.5281/zenodo.7803300> e extraia o arquivo.
-2. Rode:
-   ```bash
-   python examples/04_carbonatos_veneranda.py --data "analytical data/LIBS"
-   python examples/04_carbonatos_veneranda.py --data "analytical data/LIBS" --reference "Dolomite 3"
-   ```
-3. Os resultados ficam em `resultados_carbonatos/`: `resultados.csv`, `erro_medio_absoluto.csv`
-   e `estimado_vs_icp.png`.
+2. Abra `examples/04_carbonatos_veneranda.py` e edite o bloco **CONFIGURAÇÃO** no topo:
+   `PASTA_DADOS` (onde estão os `.xy`), `PASTA_RESULTADOS` e `PADROES`. Para comparar vários
+   padrões de uma vez, coloque mais de um nome na lista, por exemplo
+   `PADROES = ["Ankerite 1", "Dolomite 3"]`.
+3. Salve o arquivo e clique em ▶ no VS Code. Se preferir o terminal, os mesmos valores podem ser
+   passados como argumentos: `--data`, `--out` e `--reference`.
+4. Os resultados ficam na pasta configurada: `resultados.csv`, `erro_medio_absoluto.csv`,
+   `estimado_vs_icp.png` e, quando houver vários padrões, também `comparacao_padroes.csv`.
 
 O que o script faz (`cflibs_bench/real_data.py`):
 
