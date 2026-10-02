@@ -99,16 +99,33 @@ K 1 766.490 0 13043 0.682 2 4
 K 1 769.896 0 12985 0.340 2 2
 """
 
+# Linhas EXTRAS (opt-in: ``load_lines(..., extra=True)``), úteis para carbonatos e
+# outras matrizes ricas em Mg/Sr. f calculado de A_ki/log gf do NIST ASD — conferir
+# antes de uso quantitativo. Não fazem parte do benchmark de referência do README.
+_EXTRA_LINES = """
+Ca 1 422.673 0 23652 1.75 1 3
+Ca 1 610.272 15158 31539 0.161 1 3
+Ca 1 612.222 15210 31539 0.161 3 3
+Ca 1 616.217 15316 31539 0.163 5 3
+Mg 1 382.935 21850 47957 0.62 1 3
+Mg 1 383.231 21870 47957 0.46 3 5
+Mg 1 383.829 21911 47957 0.52 5 7
+Sr 1 460.733 0 21698 1.92 1 3
+Sr 2 407.771 0 24517 0.707 2 4
+Sr 2 421.552 0 23715 0.338 2 2
+"""
+
 # Energia de ionização (eV) — NIST.
 IONIZATION_EV = {
     "Ca": 6.1132, "Al": 5.9858, "Mg": 7.6462, "Si": 8.1517, "Fe": 7.9024,
     "Mn": 7.4340, "Ti": 6.8281, "Cr": 6.7665, "Na": 5.1391, "K": 4.3407,
+    "Sr": 5.6949,
 }
 
 # Massa atômica (u).
 ATOMIC_MASS = {
     "Ca": 40.078, "Al": 26.982, "Mg": 24.305, "Si": 28.085, "Fe": 55.845,
-    "Mn": 54.938, "Ti": 47.867, "Cr": 51.996, "Na": 22.990, "K": 39.098,
+    "Mn": 54.938, "Ti": 47.867, "Cr": 51.996, "Na": 22.990, "K": 39.098, "Sr": 87.62,
     "O": 15.999,
 }
 
@@ -125,6 +142,7 @@ _U_TABLE = {
     ("Cr", 1): (7.4, 15.0, 35.0, 70.0), ("Cr", 2): (6.2, 9.0, 14.0, 21.0),
     ("Na", 1): (2.0, 2.4, 6.0, 15.0), ("Na", 2): (1.0, 1.0, 1.0, 1.0),
     ("K", 1): (2.0, 3.0, 10.0, 30.0), ("K", 2): (1.0, 1.0, 1.0, 1.0),
+    ("Sr", 1): (1.0, 1.3, 3.0, 8.0), ("Sr", 2): (2.0, 2.2, 2.6, 3.2),
 }
 
 # Larguras Lorentzianas (FWHM, nm) a ne = 1e17 cm^-3 — aproximação uniforme por estágio.
@@ -162,8 +180,9 @@ class LineList:
         return list(zip(self.element.tolist(), self.stage.tolist()))
 
 
-def load_lines(elements=None, wl_range=None) -> LineList:
-    rows = [r.split() for r in _LINES.strip().splitlines()]
+def load_lines(elements=None, wl_range=None, extra=False) -> LineList:
+    text = _LINES.strip() + ("\n" + _EXTRA_LINES.strip() if extra else "")
+    rows = [r.split() for r in text.splitlines()]
     el = np.array([r[0] for r in rows])
     stage = np.array([int(r[1]) for r in rows])
     num = np.array([[float(x) for x in r[2:]] for r in rows])

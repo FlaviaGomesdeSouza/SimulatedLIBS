@@ -5,3 +5,5 @@ __pycache__/
 resultados/
 build/
 dist/
+analytical data/
+analytical_data.zip

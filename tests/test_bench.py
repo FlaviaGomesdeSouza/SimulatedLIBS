@@ -86,3 +86,28 @@ def test_mcmc_quick(model):
     s = add_noise(model.simulate_sample(SAMPLES["basalto"]), 0.005, rng=0)
     r = BayesianMCMC(model, n_walkers=24, n_steps=40, burn_in=20, seed=0).fit(s)
     assert "oxide_p16" in r.extra and 0 < r.extra["acceptance"] < 1
+
+
+def test_read_xy_formats(tmp_path):
+    from cflibs_bench.real_data import load_folder, read_xy, sample_name
+    wl = np.arange(300, 301, 0.05)
+    y = np.exp(-((wl - 300.5) / 0.1) ** 2)
+    (tmp_path / "Dolomite 1 LIBS (1).xy").write_text(
+        "\n".join(f"{a:.3f};{b:.3f}" for a, b in zip(wl, y)))
+    (tmp_path / "Dolomite 1 LIBS (2).xy").write_text(
+        "lambda\tI\n" + "\n".join(f"{a:.3f}\t{b:.3f}".replace(".", ",") for a, b in zip(wl, y)))
+    s = read_xy(str(tmp_path / "Dolomite 1 LIBS (1).xy"))
+    assert len(s.wl) == len(wl) and s.wl[0] == pytest.approx(300.0)
+    assert sample_name("Siderite 2 LIBS (5).xy") == "Siderite 2"
+    data = load_folder(str(tmp_path))
+    assert list(data) == ["Dolomite 1"] and data["Dolomite 1"].truth["n_spots"] == 2
+    assert data["Dolomite 1"].intensity.max() == pytest.approx(y.max(), abs=1e-3)
+
+
+def test_cation_wt_roundtrip():
+    from cflibs_bench.composition import (atomic_fractions_to_cation_wt,
+                                          cation_wt_to_atomic_fractions)
+    wt = {"Ca": 51.3, "Mg": 47.0, "Fe": 1.3, "Mn": 0.2, "Sr": 0.2}
+    back = atomic_fractions_to_cation_wt(cation_wt_to_atomic_fractions(wt))
+    for k, v in wt.items():
+        assert back[k] == pytest.approx(100 * v / sum(wt.values()), rel=1e-9)

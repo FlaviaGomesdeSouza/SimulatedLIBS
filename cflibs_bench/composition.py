@@ -16,7 +16,7 @@ OXIDES = {
     "Si": ("SiO2", 1, 2), "Ti": ("TiO2", 1, 2), "Al": ("Al2O3", 2, 3),
     "Fe": ("Fe2O3", 2, 3), "Mn": ("MnO", 1, 1), "Mg": ("MgO", 1, 1),
     "Ca": ("CaO", 1, 1), "Na": ("Na2O", 2, 1), "K": ("K2O", 2, 1),
-    "Cr": ("Cr2O3", 2, 3),
+    "Cr": ("Cr2O3", 2, 3), "Sr": ("SrO", 1, 1),
 }
 OXIDE_TO_ELEMENT = {v[0]: k for k, v in OXIDES.items()}
 
@@ -41,6 +41,20 @@ def atomic_fractions_to_oxides(frac: dict[str, float]) -> dict[str, float]:
     mass = {OXIDES[el][0]: x * _oxide_mass_per_cation(el) for el, x in frac.items()}
     tot = sum(mass.values())
     return {ox: 100.0 * m / tot for ox, m in mass.items()}
+
+
+def cation_wt_to_atomic_fractions(wt: dict[str, float]) -> dict[str, float]:
+    """% em massa dos cátions (ex.: ICP-OES "cationic wt%") -> frações atômicas."""
+    mol = {e: w / ATOMIC_MASS[e] for e, w in wt.items() if w > 0}
+    tot = sum(mol.values())
+    return {e: m / tot for e, m in mol.items()}
+
+
+def atomic_fractions_to_cation_wt(frac: dict[str, float]) -> dict[str, float]:
+    """Frações atômicas -> % em massa dos cátions, normalizada a 100 %."""
+    mass = {e: x * ATOMIC_MASS[e] for e, x in frac.items()}
+    tot = sum(mass.values())
+    return {e: 100.0 * m / tot for e, m in mass.items()}
 
 
 def normalize(d: dict[str, float]) -> dict[str, float]:

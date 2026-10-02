@@ -116,18 +116,22 @@ class OnePointCalibration(SahaBoltzmannCF):
     """CF-LIBS com correção por um único padrão de referência (Cavalcanti et al. 2013)."""
     name = "Ponto único (Cavalcanti)"
 
-    def __init__(self, model, reference: Spectrum, reference_oxides: dict, **kw):
+    def __init__(self, model, reference: Spectrum, reference_oxides: dict | None = None,
+                 reference_fractions: dict | None = None, **kw):
+        """Composição do padrão: ``reference_oxides`` (% óxidos) ou
+        ``reference_fractions`` (frações atômicas dos cátions)."""
         super().__init__(model, **kw)
         self.name = "Ponto único (Cavalcanti)"
+        if reference_fractions is None:
+            reference_fractions = oxides_to_atomic_fractions(reference_oxides)
         self._calibrate(reference.resample(model.wl) if len(reference.wl) != len(model.wl)
-                        else reference, reference_oxides)
+                        else reference, reference_fractions)
 
-    def _calibrate(self, ref: Spectrum, oxides: dict):
+    def _calibrate(self, ref: Spectrum, frac: dict):
         m, L = self.model, self.model.lines
         idx, I = self.measure_lines(ref)
         y_raw = self.boltzmann_y(idx, I)
         T, _, _ = self.solve(idx, y_raw)
-        frac = oxides_to_atomic_fractions(oxides)
         c = np.array([frac.get(e, 0.0) for e in m.elements])
         S = m.saha_ratio(np.array([T]))[0]
         el = m.el_index[idx]

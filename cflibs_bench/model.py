@@ -40,11 +40,12 @@ class PlasmaModel:
     window : meia-largura (nm) da janela em torno de cada linha; janelas que se
         sobrepõem são fundidas em "fragmentos" (como no artigo do MC-LIBS).
     resolving_power : λ/Δλ do espectrômetro (Echelle típico: 5000–20000).
+    extra_lines : inclui linhas extras (Mg I 383 nm, Sr I/II) — ver ``atomic_data``.
     """
 
     def __init__(self, elements=None, wl_range=(300.0, 780.0), ne=1e17, step=0.01,
-                 window=0.5, resolving_power=10000.0, stark_scale=1.0):
-        self.lines = load_lines(elements, wl_range)
+                 window=0.5, resolving_power=10000.0, stark_scale=1.0, extra_lines=False):
+        self.lines = load_lines(elements, wl_range, extra=extra_lines)
         present = list(dict.fromkeys(self.lines.element.tolist()))
         if elements is None:
             elements = present

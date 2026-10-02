@@ -21,7 +21,7 @@ espectro sintético (modelo LTE + autoabsorção + função instrumental Echelle
 ```bash
 pip install -e .            # numpy, scipy, pandas, matplotlib, scikit-learn
 pip install SimulatedLIBS   # opcional: espectros do NIST (precisa de internet)
-pytest                      # 9 testes, cerca de 10 s
+pytest tests                # 11 testes, cerca de 10 s
 ```
 
 ## Uso rápido
@@ -34,6 +34,7 @@ python -m cflibs_bench.benchmark --sample granito --T 8000 --noise 0.01 --algori
 CFLIBS_QUICK=1 python -m cflibs_bench.benchmark --algorithms all   # versão rápida (menos iterações)
 python examples/02_estudo_ruido.py                         # erro vs. nível de ruído
 python examples/03_simulatedlibs_nist.py                   # espectro do SimulatedLIBS/NIST (online)
+python examples/04_carbonatos_veneranda.py --data "analytical data/LIBS"   # dados reais
 ```
 
 Uso como biblioteca:
@@ -152,6 +153,61 @@ completos estão em [`resultados_exemplo/`](resultados_exemplo/).
 6. **O MCMC** fornece intervalos de 16–84 % para cada óxido. Num teste isolado (basalto, ruído
    gerado com `rng=1`), o intervalo do Cr₂O₃ (26 ppm) foi de 0,002 a 0,04 %, o que na prática funciona como um limite superior. Nenhum método de
    otimização fornece essa informação.
+
+## Teste com dados reais: carbonatos de Veneranda et al. (2023)
+
+O script `examples/04_carbonatos_veneranda.py` aplica os algoritmos aos espectros LIBS **reais**
+de 17 carbonatos naturais (calcita, aragonita, dolomita, ankerita, huntita, magnesita e siderita).
+Esses espectros vêm do emulador SimulCam/SuperCam (Echelle, 255–800 nm, ar, 5 pontos por amostra)
+e são comparados com a composição catiônica medida por ICP-OES (Tabela 2 do artigo).
+
+1. Baixe os dados em <https://doi.org/10.5281/zenodo.7803300> e extraia o arquivo.
+2. Rode:
+   ```bash
+   python examples/04_carbonatos_veneranda.py --data "analytical data/LIBS"
+   python examples/04_carbonatos_veneranda.py --data "analytical data/LIBS" --reference "Dolomite 3"
+   ```
+3. Os resultados ficam em `resultados_carbonatos/`: `resultados.csv`, `erro_medio_absoluto.csv`
+   e `estimado_vs_icp.png`.
+
+O que o script faz (`cflibs_bench/real_data.py`):
+
+* lê os arquivos `.xy`, que usam `;` como separador, e tira a média dos 5 pontos de cada amostra;
+* estima o deslocamento de calibração em λ (cerca de +0,05 nm nesses dados);
+* subtrai a linha de base em cada fragmento;
+* usa poder de resolução de 3 500, valor medido pela FWHM das linhas, de 0,13 a 0,2 nm;
+* inclui linhas extras de Ca I (422,7 e 610–616 nm), Mg I (383 nm) e Sr. Essas linhas não estão
+  na tabela original e só são usadas quando `extra_lines=True`.
+
+Erro médio absoluto em relação ao ICP-OES, em pontos de % massa catiônica, com a Ankerita 1 como
+padrão único. São 16 amostras; a Ankerita 1 não entra na conta.
+
+| método | Ca | Mg | Fe | Mn | média |
+|---|---:|---:|---:|---:|---:|
+| LS + calibração de resposta (1 padrão) | 5,6 | 8,4 | 3,5 | 0,2 | 4,4 |
+| SBP + ponto único (Cavalcanti) | 10,4 | 8,6 | 9,7 | 0,6 | 7,3 |
+| LS sem padrão | 11,3 | 21,4 | 11,2 | 0,4 | 11,1 |
+| SBP sem padrão | 20,4 | 11,8 | 12,1 | 27,4 | 17,9 |
+
+![carbonatos](resultados_carbonatos/estimado_vs_icp.png)
+
+**Como ler esta tabela:**
+
+* **Sem nenhum padrão, nenhum método é quantitativo nesses dados.** Os espectros não têm a resposta
+  espectral corrigida (os autores só normalizaram pelo máximo). Além disso, as linhas de Ca I usadas
+  cobrem só 3,9 a 4,8 eV de energia, o que estima mal a temperatura. O modelo também tem só cerca
+  de 80 linhas: linhas fracas acabam contaminadas por outras que ele não descreve, o que gera Mn
+  espúrio no SBP. Por fim, o ajuste por mínimos quadrados sem padrão vai para T ≈ 3 000 K.
+* **Um único padrão de matriz similar resolve a maior parte do problema.** A
+  "calibração de resposta" (`fit_reference_response`) é a versão, para o modelo direto, da
+  calibração de ponto único. Ela ajusta o padrão com composição fixa e calcula um ganho por
+  fragmento espectral, que corrige a resposta do instrumento, erros de dados atômicos e parte da
+  autoabsorção. Nos sideritos, porém, o Fe continua subestimado: cerca de 73 % contra 84–89 % no ICP.
+* **A escolha do padrão importa.** Com a Dolomita 3 ou a Siderita 2 como padrão, o erro médio do
+  LS + resposta sobe para 8–9 pontos. O padrão precisa conter todos os elementos de interesse em
+  teores mensuráveis, e a Ankerita tem Ca, Mg, Fe e Mn.
+* As funções de partição e as larguras Stark continuam aproximadas, e falta uma linha de Fe a
+  ~438 nm. Substituí-las por valores do NIST é o próximo passo natural.
 
 ## SimulatedLIBS e NIST
 
