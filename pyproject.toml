@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cflibs-bench"
+version = "0.1.0"
+description = "Bancada de testes de algoritmos de LIBS sem calibração (CF-LIBS) em espectros sintéticos"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=2.0", "scipy>=1.11", "pandas", "matplotlib", "scikit-learn"]
+
+[project.optional-dependencies]
+simulatedlibs = ["SimulatedLIBS"]
+test = ["pytest"]
+
+[project.scripts]
+cflibs-bench = "cflibs_bench.benchmark:main"
+
+[tool.setuptools.packages.find]
+include = ["cflibs_bench*"]
